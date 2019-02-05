@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace AwesomeFunctions
@@ -11,23 +10,22 @@ namespace AwesomeFunctions
     {
         static void Main(string[] args)
         {
-            var tablePrinter = new TablePrinter(new Table());
-            tablePrinter.Print();
+            var tablePrinter = new TablePrinter();
+            tablePrinter.Print(new Table(
+                new[] {"First Name", "Last Name", "Job"},
+                new[]
+                {
+                    new Row("Adrian", "Stanescu", "Salahor"),
+                    new Row("Ionut", "Dumitrescu", "Programator"),
+                    new Row("Adrian", "Stanescu", "Salahor"),
+                }));
         }
     }
 
     public class TableBuilder
     {
-        private Table _table;
-
-        public TableBuilder(Table table)
+        public string BuildHeader(string[] headers)
         {
-            _table = table;
-        }
-
-        public string BuildHeader()
-        {
-            var headers = GetHeadersName();
             StringBuilder headerBuilder = new StringBuilder(" | ");
         
             foreach (var element in headers)
@@ -39,10 +37,10 @@ namespace AwesomeFunctions
             return headerBuilder.ToString();
         }
 
-        public string BuildRows()
+        public string BuildRows(Table table)
         {
             StringBuilder rowsBuilder = new StringBuilder();
-            var rows = _table.GetRows();
+            var rows = table.GetRows();
 
             foreach (var row in rows)
             {
@@ -52,41 +50,33 @@ namespace AwesomeFunctions
 
             return rowsBuilder.ToString();
         }
-
-        private string[] GetHeadersName()
-        {
-            var headers = _table.GetRows()[0].GetType().GetProperties();
-            return headers.Select(x => x.Name).ToArray();
-        }
     }
 
     public class TablePrinter
     {
-        private Table _table;
-        private TableBuilder _tableBuilder;
+        private readonly TableBuilder _tableBuilder;
 
-        public TablePrinter(Table table)
+        public TablePrinter()
         {
-            _table = table;
-            _tableBuilder = new TableBuilder(table);
+            _tableBuilder = new TableBuilder();
         }
 
-        public void Print()
+        public void Print(Table table)
         {
-            PrintHeader();
-            PrintRows();
+            PrintHeader(table.GetHeaderRow());
+            PrintRows(table);
         }
 
-        private void PrintHeader()
+        private void PrintHeader(string[] headers)
         {
-            var header = _tableBuilder.BuildHeader();
+            var header = _tableBuilder.BuildHeader(headers);
        
             Console.WriteLine(header);
         }
 
-        private void PrintRows()
+        private void PrintRows(Table table)
         {
-            var rows = _tableBuilder.BuildRows();
+            var rows = _tableBuilder.BuildRows(table);
 
             Console.WriteLine(rows);
         }
@@ -94,16 +84,23 @@ namespace AwesomeFunctions
 
     public class Table
     {
-        private readonly Row[] rows =
+        private readonly Row[] _rows;
+        private readonly string[] _header;
+
+        public Table(string[] header, IEnumerable<Row> rows)
         {
-            new Row("Adrian", "Stanescu", "Salahor"),
-            new Row("Ionut", "Dumitrescu", "Programator"),
-            new Row("Adrian", "Stanescu", "Salahor"),
-        };
+            _rows = rows.ToArray();
+            _header = header;
+        }
 
         public Row[] GetRows()
         {
-            return rows;
+            return _rows;
+        }
+
+        public string[] GetHeaderRow()
+        {
+            return _header;
         }
     }
 
