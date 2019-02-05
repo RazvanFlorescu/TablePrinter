@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -10,8 +11,8 @@ namespace AwesomeFunctions
     {
         static void Main(string[] args)
         {
-            var tablePrinter = new TablePrinter();
-            tablePrinter.Print(new Table(
+            var consolePrinter = new TablePrinter(Console.Out);
+            consolePrinter.Print(new Table(
                 new[] {"First Name", "Last Name", "Job"},
                 new[]
                 {
@@ -20,7 +21,7 @@ namespace AwesomeFunctions
                     new Row("Adrian", "Stanescu", "Salahor"),
                 }));
 
-            tablePrinter.Print(new Table(
+            consolePrinter.Print(new Table(
                 new[] { "First Name", "Last Name", "Job", "Age" },
                 new[]
                 {
@@ -29,6 +30,20 @@ namespace AwesomeFunctions
                     new Row("Adrian", "Stanescu", "Salahor"),
                 }));
 
+
+            using (var fileWriter = new StreamWriter(File.Create("out.txt")))
+            {
+                var filePrinter = new TablePrinter(fileWriter);
+                filePrinter.Print(new Table(
+                    new[] { "First Name", "Last Name", "Job" },
+                    new[]
+                    {
+                    new Row("Adrian", "Stanescu", "Salahor"),
+                    new Row("Ionut", "Dumitrescu", "Programator"),
+                    new Row("Adrian", "Stanescu", "Salahor"),
+                    })
+                );
+            }
         }
     }
 
@@ -74,15 +89,17 @@ namespace AwesomeFunctions
     public class TablePrinter
     {
         private readonly TableBuilder _tableBuilder;
+        protected internal TextWriter TextWriter;
 
-        public TablePrinter()
+        public TablePrinter(TextWriter textWriter)
         {
+            TextWriter = textWriter;
             _tableBuilder = new TableBuilder();
         }
 
         public void Print(Table table)
         {
-            Console.WriteLine(_tableBuilder.BuildTable(table));
+            TextWriter.WriteLine(_tableBuilder.BuildTable(table));
         }
     }
 
