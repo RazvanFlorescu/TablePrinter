@@ -19,36 +19,55 @@ namespace AwesomeFunctions
                     new Row("Ionut", "Dumitrescu", "Programator"),
                     new Row("Adrian", "Stanescu", "Salahor"),
                 }));
+
+            tablePrinter.Print(new Table(
+                new[] { "First Name", "Last Name", "Job", "Age" },
+                new[]
+                {
+                    new Row("Adrian", "Stanescu", "Salahor", "12"),
+                    new Row("Ionut", "Dumitrescu", "Programator","33"),
+                    new Row("Adrian", "Stanescu", "Salahor"),
+                }));
+
         }
     }
 
     public class TableBuilder
     {
-        public string BuildHeader(string[] headers)
+        public string BuildTable(Table table)
         {
-            StringBuilder headerBuilder = new StringBuilder(" | ");
+            var rowsBuilder = new StringBuilder();
+
+            BuildHeader(table.GetHeaderRow(), rowsBuilder);
+            BuildRows(table.GetRows(), rowsBuilder);
+
+            return rowsBuilder.ToString();
+        }
+
+        private static void BuildRows(Row[] rows, StringBuilder rowsBuilder)
+        {
+            foreach (var row in rows)
+            {
+                foreach (var column in row.Columns)
+                {
+                    rowsBuilder.AppendFormat("{0} ", column);
+                }
+
+                rowsBuilder.AppendLine();
+            }
+        }
+
+        private void BuildHeader(string[] headers, StringBuilder rowsBuilder)
+        {
+            rowsBuilder.Append("| ");
         
             foreach (var element in headers)
             {
-                headerBuilder.Append(element);
-                headerBuilder.Append(" | ");
+                rowsBuilder.Append(element);
+                rowsBuilder.Append("| ");
             }
 
-            return headerBuilder.ToString();
-        }
-
-        public string BuildRows(Table table)
-        {
-            StringBuilder rowsBuilder = new StringBuilder();
-            var rows = table.GetRows();
-
-            foreach (var row in rows)
-            {
-                rowsBuilder.AppendFormat(" {0} {1} {2} ", row.FirstName, row.LastName, row.Job);
-                rowsBuilder.AppendLine();
-            }
-
-            return rowsBuilder.ToString();
+            rowsBuilder.AppendLine();
         }
     }
 
@@ -63,22 +82,7 @@ namespace AwesomeFunctions
 
         public void Print(Table table)
         {
-            PrintHeader(table.GetHeaderRow());
-            PrintRows(table);
-        }
-
-        private void PrintHeader(string[] headers)
-        {
-            var header = _tableBuilder.BuildHeader(headers);
-       
-            Console.WriteLine(header);
-        }
-
-        private void PrintRows(Table table)
-        {
-            var rows = _tableBuilder.BuildRows(table);
-
-            Console.WriteLine(rows);
+            Console.WriteLine(_tableBuilder.BuildTable(table));
         }
     }
 
@@ -106,15 +110,11 @@ namespace AwesomeFunctions
 
     public class Row
     {
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Job { get; set; }
+        public string[] Columns { get; set; }
 
-        public Row(string firstName, string lastName, string job)
+        public Row(params string[] columns)
         {
-            FirstName = firstName;
-            LastName = lastName;
-            Job = job;
+            Columns = columns;
         }
     }
 }
