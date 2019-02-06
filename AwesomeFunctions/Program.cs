@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
-using System.Reflection;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace AwesomeFunctions
 {
@@ -11,7 +12,7 @@ namespace AwesomeFunctions
     {
         static void Main(string[] args)
         {
-            var consolePrinter = new TablePrinter(Console.Out);
+            var consolePrinter = new TablePrinter(Console.Out, new TableRowsFormatter());
             consolePrinter.Print(new Table(
                 new[] {"First Name", "Last Name", "Job"},
                 new[]
@@ -33,7 +34,7 @@ namespace AwesomeFunctions
 
             using (var fileWriter = new StreamWriter(File.Create("out.txt")))
             {
-                var filePrinter = new TablePrinter(fileWriter);
+                var filePrinter = new TablePrinter(fileWriter, new TableRowsFormatter());
                 filePrinter.Print(new Table(
                     new[] { "First Name", "Last Name", "Job" },
                     new[]
@@ -44,12 +45,34 @@ namespace AwesomeFunctions
                     })
                 );
             }
+
+            using (var fileWriter = new StreamWriter(File.Create("out.json")))
+            {
+                var filePrinter = new TablePrinter(Console.Out, new TableJsonFormatter());
+                filePrinter.Print(new Table(
+                    new[] { "First Name", "Last Name", "Job" },
+                    new[]
+                    {
+                        new Row("Adrian", "Stanescu", "Salahor"),
+                        new Row("Ionut", "Dumitrescu", "Programator"),
+                        new Row("Adrian", "Stanescu", "Salahor"),
+                    })
+                );
+            }
         }
     }
 
-    public class TableBuilder
+    public class TableJsonFormatter : ITableFormatter
     {
-        public string BuildTable(Table table)
+        public string Format(Table table)
+        {
+            return JsonConvert.SerializeObject(table);
+        }
+    }
+
+    public class TableRowsFormatter : ITableFormatter
+    {
+        public string Format(Table table)
         {
             var rowsBuilder = new StringBuilder();
 
@@ -88,25 +111,30 @@ namespace AwesomeFunctions
 
     public class TablePrinter
     {
-        private readonly TableBuilder _tableBuilder;
+        private readonly ITableFormatter _tableFormatter;
         protected internal TextWriter TextWriter;
 
-        public TablePrinter(TextWriter textWriter)
+        public TablePrinter(TextWriter textWriter, ITableFormatter tableFormatter)
         {
             TextWriter = textWriter;
-            _tableBuilder = new TableBuilder();
+            _tableFormatter = tableFormatter;
         }
 
         public void Print(Table table)
         {
-            TextWriter.WriteLine(_tableBuilder.BuildTable(table));
+            TextWriter.WriteLine(_tableFormatter.Format(table));
         }
+    }
+
+    public interface ITableFormatter
+    {
+        string Format(Table table);
     }
 
     public class Table
     {
-        private readonly Row[] _rows;
-        private readonly string[] _header;
+        public Row[] _rows { get; set; }
+        public string[] _header { get; set; }
 
         public Table(string[] header, IEnumerable<Row> rows)
         {
